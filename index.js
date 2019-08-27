@@ -9,11 +9,6 @@ const { copyUntranslatedDocs } = require('./copy-english-docs')
 const Hexo = require('hexo')
 const chalk = require('chalk')
 const minimist = require('minimist')
-const Contentful = require('contentful')
-const moment = require('moment')
-const yaml = require('js-yaml')
-const fs = require('fs')
-const { documentToHtmlString } = require('@contentful/rich-text-html-renderer')
 
 // these are the args like --port
 const args = minimist(process.argv.slice(2))
@@ -97,57 +92,7 @@ function initHexo () {
 
   console.log('NODE_ENV is:', chalk.cyan(env))
 
-  return new Promise((resolve, reject) => {
-    const space = hexo.env.GATSBY_CONTENTFUL_SPACE_ID || process.env.GATSBY_CONTENTFUL_SPACE_ID
-    const accessToken = hexo.env.GATSBY_CONTENTFUL_ACCESS_TOKEN || process.env.GATSBY_CONTENTFUL_ACCESS_TOKEN
-
-    if (typeof space === 'undefined' || typeof accessToken === 'undefined') {
-      return reject({
-        message: 'No Contentful space variables.',
-      })
-    }
-
-    return Contentful.createClient({ space, accessToken })
-    .getEntries({ content_type: 'topBanner' })
-    .then(({ items }) => {
-      const data = items.reduce((filtered, option) => {
-        if (moment(option.fields.endDate).isSameOrAfter(moment())) {
-          filtered.push({ ...option.fields, text: documentToHtmlString(option.fields.text) })
-        }
-
-        return filtered
-      }, [])
-
-      fs.writeFile(
-        `${__dirname}/source/_data/banners.yml`,
-        yaml.safeDump(data),
-        (error) => {
-          // log if writeFile ends with error, but don't block hexo init process
-          if (error) {
-            console.warn(error)
-
-            return reject(error)
-          }
-
-          return resolve()
-        },
-      )
-    })
-    .catch((err) => {
-      return reject({
-        message: err,
-      })
-    })
-  })
-  // start Hexo
-  .then(() => hexo.init().then(() => hexo.call(cmd, args)))
-  .catch((error) => {
-    // log error object
-    console.error(error)
-
-    // but start Hexo anyway
-    return hexo.init().then(() => hexo.call(cmd, args))
-  })
+  return hexo.init().then(() => hexo.call(cmd, args))
 }
 
 copyUntranslatedDocs()

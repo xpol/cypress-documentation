@@ -71,6 +71,9 @@ function initHexo () {
   // so we take that into account (and any other way it is set)
   const env = hexo.env.NODE_ENV || hexo.env.env || process.env.NODE_ENV || 'development'
 
+  // Upgrade to hexo v4.x requires the cmd to be set as below
+  hexo.env.cmd = cmd
+
   // https://github.com/mamboer/hexo-filter-cleanup
   // only run the filter_cleanup if we are in
   // production mode -- deploying static asset
